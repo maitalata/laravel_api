@@ -50,4 +50,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Task::class);
     }
+
+    public function tasksSUmmary()
+    {
+        return $this->tasks()
+            ->where('created_at', '>=', now()->subDays(7))
+            ->latest()
+            ->get();
+    }
 }
