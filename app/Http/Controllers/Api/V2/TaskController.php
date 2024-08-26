@@ -17,7 +17,14 @@ class TaskController extends Controller
     public function index()
     {
         Gate::authorize('viewAny', Task::class);
-        return TaskResource::collection(auth()->user()->tasks()->latest()->get());
+
+        $userTasks = auth()->user()
+            ->tasks()
+            ->handleSort(request()->query('sort_by') ?? 'time')
+            ->with('priority')
+            ->get();
+
+        return TaskResource::collection($userTasks);
     }
 
     /**
@@ -35,10 +42,10 @@ class TaskController extends Controller
     {
         if (request()->user()->cannot('create', Task::class)) {
             abort(403, 'You are not allowed to update this task.');
-        } 
+        }
 
         $task = $request->user()->tasks()->create($request->validated());
-
+        $task->load('priority');
         return TaskResource::make($task);
     }
 
@@ -48,6 +55,7 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         Gate::authorize('view', $task);
+        $task->load('priority');
         return TaskResource::make($task);
     }
 
@@ -69,7 +77,7 @@ class TaskController extends Controller
         }
 
         $task->update($request->validated());
-
+        $task->load('priority');
         return TaskResource::make($task);
     }
 
